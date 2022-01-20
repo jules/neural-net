@@ -21,3 +21,13 @@ int main() {
 	printf("\n");
     return 0;
 }
+
+double activate(int *weights, int *inputs, int inputs_len) {
+	double bias = *(weights + inputs_len);
+
+	for (int i = 0; i < inputs_len; i++) {
+		bias = bias + (*(weights + i) * *(inputs + i));
+	}
+	return bias;
+}
+
