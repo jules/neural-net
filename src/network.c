@@ -1,4 +1,4 @@
-int* create_layer(int n_neurons, int n_weights) {
-	double layer[n_neurons][n_weights+1];
+int* create_layer(int n_weights, int n_neurons) {
+	double layer[n_weights+1][n_neurons];
 	return layer;
 }
