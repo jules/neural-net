@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "network.h"
 
 int main() {
@@ -31,3 +32,6 @@ double activate(int *weights, int *inputs, int inputs_len) {
 	return bias;
 }
 
+double transfer(double activation) {
+    return 1.0 / (1.0 + exp(-activation));
+}
