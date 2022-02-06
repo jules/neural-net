@@ -42,25 +42,19 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
     n.n_hidden_neurons = n_hidden_neurons;
     n.hidden_neurons = create_layer(n.n_hidden_neurons);
     n.n_hidden_weights = n_hidden_weights;
-    n.hidden_weights = malloc(sizeof(double*) * n.n_hidden_neurons);
+    n.hidden_weights = malloc(sizeof(double) * (n.n_hidden_weights + 1) * n.n_hidden_neurons);
     if (!n.hidden_weights) {
         printf("out of memory");
         exit(1);
-    }
-    for (int i = 0; i < n.n_hidden_neurons; i++) {
-        n.hidden_weights[i] = create_layer(n.n_hidden_weights + 1);
     }
 
     n.n_output_neurons = n_output_neurons;
     n.output_neurons = create_layer(n.n_output_neurons);
     n.n_output_weights = n_output_weights;
-    n.output_weights = malloc(sizeof(double*) * n.n_output_neurons);
+    n.output_weights = malloc(sizeof(double*) * (n.n_output_weights + 1) * n.n_output_neurons);
     if (!n.output_weights) {
         printf("out of memory");
         exit(1);
-    }
-    for (int i = 0; i < n.n_output_neurons; i++) {
-        n.output_weights[i] = create_layer(n.n_output_weights + 1);
     }
 
     return n;
@@ -79,18 +73,16 @@ double transfer(double activation) {
 	return 1.0 / (1.0 + exp(-activation));
 }
 
-double* forward_propagate(struct network* n) {
-	for (int i = 0; i < hidden_neurons; i++) {
-	    double activation = activate(&n.hidden_weights, inputs, inputs_length);
-	    n.hidden_neurons[i] = transfer(activation);
+void forward_propagate(struct network* n) {
+	for (int i = 0; i < n->n_hidden_neurons; i++) {
+	    double activation = activate(&n->hidden_weights[i], n->inputs, n->n_inputs);
+	    n->hidden_neurons[i] = transfer(activation);
 	}
 	
-	for (int i = 0; i < output_neurons; i++) {
-	    double activation = activate(&output_layer[i], hidden_outputs, hidden_neurons);
-	    outputs[i] = transfer(activation);
+	for (int i = 0; i < n->n_output_neurons; i++) {
+	    double activation = activate(&n->output_weights[i], n->hidden_neurons, n->n_hidden_neurons);
+	    n->output_neurons[i] = transfer(activation);
 	}
-
-	return outputs;
 }
 
 double transfer_derivative(double output) {
