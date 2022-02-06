@@ -12,12 +12,16 @@ struct network {
     // Hidden layer
     int     n_hidden_neurons;
     double* hidden_neurons;
+    double* hidden_deltas;
+
     int     n_hidden_weights;
     double* hidden_weights;
 
     // Output layer
     int     n_output_neurons;
     double* output_neurons;
+    double* output_deltas;
+
     int     n_output_weights;
     double* output_weights;
 };
@@ -41,6 +45,7 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
 
     n.n_hidden_neurons = n_hidden_neurons;
     n.hidden_neurons = create_layer(n.n_hidden_neurons);
+    n.hidden_deltas = create_layer(n.n_hidden_neurons);
     n.n_hidden_weights = n_hidden_weights;
     n.hidden_weights = malloc(sizeof(double) * (n.n_hidden_weights + 1) * n.n_hidden_neurons);
     if (!n.hidden_weights) {
@@ -50,6 +55,7 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
 
     n.n_output_neurons = n_output_neurons;
     n.output_neurons = create_layer(n.n_output_neurons);
+    n.output_deltas = create_layer(n.n_output_neurons);
     n.n_output_weights = n_output_weights;
     n.output_weights = malloc(sizeof(double*) * (n.n_output_weights + 1) * n.n_output_neurons);
     if (!n.output_weights) {
@@ -73,6 +79,7 @@ double transfer(double activation) {
 	return 1.0 / (1.0 + exp(-activation));
 }
 
+// Runs a full 'forward propagation' through the whole network.
 void forward_propagate(struct network* n) {
 	for (int i = 0; i < n->n_hidden_neurons; i++) {
 	    double activation = activate(&n->hidden_weights[i], n->inputs, n->n_inputs);
@@ -89,10 +96,29 @@ double transfer_derivative(double output) {
 	return output * (1.0 - output);
 }
 
-// void backward_propagate_error(double* hidden_layer, int hidden_neurons, int hidden_weights, 
-//         double* output_layer, int output_neurons, int output_weights, 
-//         double* outputs, int outputs_length,
-//         double* expected, int expected_length) {
-//     double* errors = malloc(sizeof(double) * 
-// 
-// }
+void backward_propagate_error(struct network* n, double* expected) {
+    double* errors = malloc(sizeof(double) * (n->n_hidden_neurons * n->n_output_neurons));
+    
+    // Set deltas and add errors for output layer
+    for (int i = 0; i < n->n_output_neurons; i++) {
+        errors[i] = n->output_neurons[i] - expected[i];
+    }
+
+    for (int i = 0; i < n->n_output_neurons; i++) {
+        n->output_deltas[i] = errors[i] * transfer_derivative(n->output_neurons[i]);
+    }
+
+    // Set deltas and add errors for hidden layer
+    for (int i = 0; i < n->n_hidden_neurons; i++) {
+        double error;
+        for (int j = 0; j < n->n_output_neurons; i++) {
+            error = error + (n->output_weights[j * n->n_output_neurons + i] * n->output_deltas[j]);
+        }
+
+        errors[i + n->n_output_neurons] = n->output_neurons[i] - expected[i];
+    }
+
+    for (int i = 0; i < n->n_hidden_neurons; i++) {
+        n->hidden_deltas[i] = errors[i + n->n_output_neurons] * transfer_derivative(n->hidden_neurons[i]);
+    }
+}
