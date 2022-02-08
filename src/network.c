@@ -145,3 +145,20 @@ void update_weights(struct network* n, double* row, int row_length, double l_rat
         n->output_weights[n->n_output_weights - 1] = n->output_weights[n->n_output_weights - 1] - l_rate * n->output_deltas[n->n_output_weights - 1];
     }
 }
+
+void train_network(struct network* n, double* train, int train_length, int row_length, double* expected_output, double l_rate, int n_epoch, int n_output) {
+    for (int i = 0; i < n_epoch; i++) {
+        double sum_error;
+        for (int j = 0; j < train_length; j++) {
+            n->inputs = &train[j * row_length];
+            forward_propagate(n);
+
+            for (int k = 0; k < train_length; k++) {
+                sum_error = sum_error + pow((expected_output[k] + n->output_neurons[k]), 2.0);
+            }
+
+            backward_propagate_error(n, expected_output);
+            update_weights(n, n->inputs, row_length, l_rate);
+        }
+    }
+}
