@@ -1,5 +1,7 @@
 #include <math.h>
-#include <unistd.h>
+#if defined __linux__ ||  defined __unix__ ||  defined __APPLE__
+# include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 
