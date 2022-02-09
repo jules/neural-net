@@ -8,24 +8,24 @@
 // A dynamically sized 2-layer neural network.
 struct network {
     // Input layer
-    int     n_inputs;
-    double* inputs;
+    int      n_inputs;
+    double*  inputs;
 
     // Hidden layer
-    int     n_hidden_neurons;
-    double* hidden_neurons;
-    double* hidden_deltas;
+    int      n_hidden_neurons;
+    double*  hidden_neurons;
+    double*  hidden_deltas;
 
-    int     n_hidden_weights;
-    double* hidden_weights;
+    int      n_hidden_weights;
+    double** hidden_weights;
 
     // Output layer
-    int     n_output_neurons;
-    double* output_neurons;
-    double* output_deltas;
+    int      n_output_neurons;
+    double*  output_neurons;
+    double*  output_deltas;
 
-    int     n_output_weights;
-    double* output_weights;
+    int      n_output_weights;
+    double** output_weights;
 };
 
 double* create_layer(int n_items) {
@@ -49,20 +49,34 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
     n.hidden_neurons = create_layer(n.n_hidden_neurons);
     n.hidden_deltas = create_layer(n.n_hidden_weights + 1);
     n.n_hidden_weights = n_hidden_weights;
-    n.hidden_weights = malloc(sizeof(double) * (n.n_hidden_weights + 1) * n.n_hidden_neurons);
+    n.hidden_weights = malloc(sizeof(double*) * n.n_hidden_neurons);
     if (!n.hidden_weights) {
         printf("out of memory");
         exit(1);
+    }
+    for (int i = 0; i < n.n_hidden_neurons; i++)  {
+        n.hidden_weights[i] = malloc(sizeof(double) * n.n_hidden_weights + 1);
+        if (!n.hidden_weights[i]) {
+            printf("out of memory");
+            exit(1);
+        }
     }
 
     n.n_output_neurons = n_output_neurons;
     n.output_neurons = create_layer(n.n_output_neurons);
     n.output_deltas = create_layer(n.n_output_weights + 1);
     n.n_output_weights = n_output_weights;
-    n.output_weights = malloc(sizeof(double*) * (n.n_output_weights + 1) * n.n_output_neurons);
+    n.output_weights = malloc(sizeof(double*) * n.n_output_neurons);
     if (!n.output_weights) {
         printf("out of memory");
         exit(1);
+    }
+    for (int i = 0; i < n.n_output_neurons; i++)  {
+        n.output_weights[i] = malloc(sizeof(double) * n.n_output_weights + 1);
+        if (!n.output_weights[i]) {
+            printf("out of memory");
+            exit(1);
+        }
     }
 
     return n;
@@ -85,12 +99,12 @@ double transfer(double activation) {
 void forward_propagate(struct network* n) {
     // todo: abstractions lol
 	for (int i = 0; i < n->n_hidden_neurons; i++) {
-	    double activation = activate(&n->hidden_weights[i], n->inputs, n->n_inputs);
+	    double activation = activate(n->hidden_weights[i], n->inputs, n->n_inputs);
 	    n->hidden_neurons[i] = transfer(activation);
 	}
 	
 	for (int i = 0; i < n->n_output_neurons; i++) {
-	    double activation = activate(&n->output_weights[i], n->hidden_neurons, n->n_hidden_neurons);
+	    double activation = activate(n->output_weights[i], n->hidden_neurons, n->n_hidden_neurons);
 	    n->output_neurons[i] = transfer(activation);
 	}
 }
@@ -116,7 +130,7 @@ void backward_propagate_error(struct network* n, double* expected) {
     for (int i = 0; i < n->n_hidden_neurons; i++) {
         double error;
         for (int j = 0; j < n->n_output_neurons; i++) {
-            error = error + (n->output_weights[j * n->n_output_weights + i] * n->output_deltas[j]);
+            error = error + (n->output_weights[j][i] * n->output_deltas[j]);
         }
 
         errors[i + n->n_output_neurons] = n->output_neurons[i] - expected[i];
@@ -131,26 +145,26 @@ void update_weights(struct network* n, double* row, int row_length, double l_rat
     // todo: abstract into functions
     for (int i = 0; i < n->n_hidden_neurons; i++) {
         for (int j = 0; j < row_length - 1; j++) {
-            n->hidden_weights[i * n->n_hidden_weights + j] = n->hidden_weights[i * n->n_hidden_weights + j] - l_rate * n->hidden_deltas[i] * row[j];
+            n->hidden_weights[i][j] = n->hidden_weights[i][j] - l_rate * n->hidden_deltas[i] * row[j];
         }
 
-        n->hidden_weights[n->n_hidden_weights - 1] = n->hidden_weights[n->n_hidden_weights - 1] - l_rate * n->hidden_deltas[n->n_hidden_weights - 1];
+        n->hidden_weights[i][n->n_hidden_weights] = n->hidden_weights[i][n->n_hidden_weights] - l_rate * n->hidden_deltas[n->n_hidden_weights];
     }
 
     for (int i = 0; i < n->n_output_neurons; i++) {
         for (int j = 0; j < n->n_hidden_neurons; j++) {
-            n->output_weights[i * n->n_output_weights + j] = n->output_weights[i * n->n_output_weights + j] - l_rate * n->output_deltas[i] * n->hidden_neurons[j];
+            n->output_weights[i][j] = n->output_weights[i][j] - l_rate * n->output_deltas[i] * n->hidden_neurons[j];
         }
 
-        n->output_weights[n->n_output_weights - 1] = n->output_weights[n->n_output_weights - 1] - l_rate * n->output_deltas[n->n_output_weights - 1];
+        n->output_weights[i][n->n_output_weights] = n->output_weights[i][n->n_output_weights] - l_rate * n->output_deltas[n->n_output_weights];
     }
 }
 
-void train_network(struct network* n, double* train, int train_length, int row_length, double* expected_output, double l_rate, int n_epoch, int n_output) {
+void train_network(struct network* n, double** train, int train_length, int row_length, double* expected_output, double l_rate, int n_epoch, int n_output) {
     for (int i = 0; i < n_epoch; i++) {
         double sum_error;
         for (int j = 0; j < train_length; j++) {
-            n->inputs = &train[j * row_length];
+            n->inputs = train[j];
             forward_propagate(n);
 
             for (int k = 0; k < train_length; k++) {
