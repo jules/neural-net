@@ -104,7 +104,8 @@ void forward_propagate(struct network* n) {
 	}
 	
 	for (int i = 0; i < n->n_output_neurons; i++) {
-	    double activation = activate(n->output_weights[i], n->hidden_neurons, n->n_hidden_neurons);
+	    double activation = 
+            activate(n->output_weights[i], n->hidden_neurons, n->n_hidden_neurons);
 	    n->output_neurons[i] = transfer(activation);
 	}
 }
@@ -137,7 +138,8 @@ void backward_propagate_error(struct network* n, double* expected) {
     }
 
     for (int i = 0; i < n->n_hidden_neurons; i++) {
-        n->hidden_deltas[i] = errors[i + n->n_output_neurons] * transfer_derivative(n->hidden_neurons[i]);
+        n->hidden_deltas[i] = 
+            errors[i + n->n_output_neurons] * transfer_derivative(n->hidden_neurons[i]);
     }
 }
 
@@ -148,19 +150,23 @@ void update_weights(struct network* n, double* row, int row_length, double l_rat
             n->hidden_weights[i][j] = n->hidden_weights[i][j] - l_rate * n->hidden_deltas[i] * row[j];
         }
 
-        n->hidden_weights[i][n->n_hidden_weights] = n->hidden_weights[i][n->n_hidden_weights] - l_rate * n->hidden_deltas[n->n_hidden_weights];
+        n->hidden_weights[i][n->n_hidden_weights] = 
+            n->hidden_weights[i][n->n_hidden_weights] - l_rate * n->hidden_deltas[n->n_hidden_weights];
     }
 
     for (int i = 0; i < n->n_output_neurons; i++) {
         for (int j = 0; j < n->n_hidden_neurons; j++) {
-            n->output_weights[i][j] = n->output_weights[i][j] - l_rate * n->output_deltas[i] * n->hidden_neurons[j];
+            n->output_weights[i][j] = 
+                n->output_weights[i][j] - l_rate * n->output_deltas[i] * n->hidden_neurons[j];
         }
 
-        n->output_weights[i][n->n_output_weights] = n->output_weights[i][n->n_output_weights] - l_rate * n->output_deltas[n->n_output_weights];
+        n->output_weights[i][n->n_output_weights] = 
+            n->output_weights[i][n->n_output_weights] - l_rate * n->output_deltas[n->n_output_weights];
     }
 }
 
-void train_network(struct network* n, double** train, int train_length, int row_length, double* expected_output, double l_rate, int n_epoch, int n_output) {
+void train_network(struct network* n, double** train, int train_length, int row_length, 
+        double* expected_output, double l_rate, int n_epoch, int n_output) {
     for (int i = 0; i < n_epoch; i++) {
         double sum_error;
         for (int j = 0; j < train_length; j++) {
@@ -180,7 +186,9 @@ void train_network(struct network* n, double** train, int train_length, int row_
 // Predict an outcome, returning the index of the output neuron with the
 // highest probability.
 int predict(struct network* n, double* row) {
-    forward_propagate(n, row);
+    n->inputs = row;
+    forward_propagate(n);
+
     int max_index = 0;
     double highest_value = 0.0;
     for (int i = 0; i < n->n_output_neurons; i++) {
