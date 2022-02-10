@@ -115,7 +115,7 @@ double transfer_derivative(double output) {
 }
 
 void backward_propagate_error(struct network* n, double* expected) {
-    double* errors = malloc(sizeof(double) * (n->n_hidden_neurons * n->n_output_neurons));
+    double* errors = malloc(sizeof(double) * (n->n_hidden_neurons + n->n_output_neurons));
     
     // todo: can we abstract better here?
     // Set deltas and add errors for output layer
