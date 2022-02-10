@@ -176,3 +176,20 @@ void train_network(struct network* n, double** train, int train_length, int row_
         }
     }
 }
+
+// Predict an outcome, returning the index of the output neuron with the
+// highest probability.
+int predict(struct network* n, double* row) {
+    forward_propagate(n, row);
+    int max_index = 0;
+    double highest_value = 0.0;
+    for (int i = 0; i < n->n_output_neurons; i++) {
+        if (n->output_neurons[i] > highest_value) {
+            highest_value = n->output_neurons[i];
+            max_index = i;
+        }
+    }
+
+    return max_index;
+}
+
