@@ -1,5 +1,5 @@
 #include <math.h>
-#if defined __linux__ ||  defined __unix__ ||  defined __APPLE__
+#if defined __linux__ || defined __unix__ || defined __APPLE__
 # include <unistd.h>
 #endif
 #include <stdlib.h>
@@ -115,31 +115,21 @@ double transfer_derivative(double output) {
 }
 
 void backward_propagate_error(struct network* n, double* expected) {
-    double* errors = malloc(sizeof(double) * (n->n_hidden_neurons + n->n_output_neurons));
-    
     // todo: can we abstract better here?
     // Set deltas and add errors for output layer
     for (int i = 0; i < n->n_output_neurons; i++) {
-        errors[i] = n->output_neurons[i] - expected[i];
-    }
-
-    for (int i = 0; i < n->n_output_neurons; i++) {
-        n->output_deltas[i] = errors[i] * transfer_derivative(n->output_neurons[i]);
+        double error = n->output_neurons[i] - expected[i];
+        n->output_deltas[i] = error * transfer_derivative(n->output_neurons[i]);
     }
 
     // Set deltas and add errors for hidden layer
     for (int i = 0; i < n->n_hidden_neurons; i++) {
-        double error;
-        for (int j = 0; j < n->n_output_neurons; i++) {
+        double error = 0.0;
+        for (int j = 0; j < n->n_output_neurons; j++) {
             error = error + (n->output_weights[j][i] * n->output_deltas[j]);
         }
 
-        errors[i + n->n_output_neurons] = n->output_neurons[i] - expected[i];
-    }
-
-    for (int i = 0; i < n->n_hidden_neurons; i++) {
-        n->hidden_deltas[i] = 
-            errors[i + n->n_output_neurons] * transfer_derivative(n->hidden_neurons[i]);
+        n->hidden_deltas[i] = error * transfer_derivative(n->hidden_neurons[i]);
     }
 }
 
