@@ -67,7 +67,9 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
 
         // Randomize weights
         for (int j = 0; j < n.n_hidden_weights + 1; j++) {
-            n.hidden_weights[i][j] = rand() / RAND_MAX;
+            int r = rand();
+            double weight  = (double) r / (double) RAND_MAX;
+            n.hidden_weights[i][j] = weight;
         }
     }
 
@@ -89,15 +91,17 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
 
         // Randomize weights
         for (int j = 0; j < n.n_output_weights + 1; j++) {
-            n.output_weights[i][j] = rand() / RAND_MAX;
+            int r = rand();
+            double weight  = (double) r / (double) RAND_MAX;
+            n.output_weights[i][j] = weight;
         }
     }
 
     return n;
 }
 
-double activate(double* weights, double* inputs, int inputs_len) {
-	double bias = weights[inputs_len-1];
+double activate(double* weights, int weights_len, double* inputs, int inputs_len) {
+	double bias = weights[weights_len];
 
 	for (int i = 0; i < inputs_len; i++) {
 		bias = bias + weights[i] * inputs[i];
@@ -113,13 +117,14 @@ double transfer(double activation) {
 void forward_propagate(struct network* n) {
     // todo: abstractions lol
 	for (int i = 0; i < n->n_hidden_neurons; i++) {
-	    double activation = activate(n->hidden_weights[i], n->inputs, n->n_inputs);
+	    double activation = 
+            activate(n->hidden_weights[i], n->n_hidden_weights, n->inputs, n->n_inputs);
 	    n->hidden_neurons[i] = transfer(activation);
 	}
 	
 	for (int i = 0; i < n->n_output_neurons; i++) {
 	    double activation = 
-            activate(n->output_weights[i], n->hidden_neurons, n->n_hidden_neurons);
+            activate(n->output_weights[i], n->n_output_weights, n->hidden_neurons, n->n_hidden_neurons);
 	    n->output_neurons[i] = transfer(activation);
 	}
 }
@@ -170,20 +175,29 @@ void update_weights(struct network* n, double* row, int row_length, double l_rat
 }
 
 void train_network(struct network* n, double** train, int train_length, int row_length, 
-        double* expected_output, double l_rate, int n_epoch, int n_output) {
+        double l_rate, int n_epoch, int n_output) {
     for (int i = 0; i < n_epoch; i++) {
-        double sum_error;
+        double sum_error = 0.0;
         for (int j = 0; j < train_length; j++) {
             n->inputs = train[j];
             forward_propagate(n);
 
-            for (int k = 0; k < train_length; k++) {
-                sum_error = sum_error + pow((expected_output[k] + n->output_neurons[k]), 2.0);
+            double* expected = malloc(sizeof(double) * n_output);
+            if (!expected) {
+                printf("out of memory");
+                exit(1);
             }
 
-            backward_propagate_error(n, expected_output);
+            expected[(int) train[j][row_length - 1]] = 1;
+            for (int k = 0; k < n_output; k++) {
+                sum_error = sum_error + pow((expected[k] - n->output_neurons[k]), 2.0);
+            }
+
+            backward_propagate_error(n, expected);
             update_weights(n, n->inputs, row_length, l_rate);
         }
+
+        printf("> epoch = %d, l_rate = %f, error = %f\n", i, l_rate, sum_error);
     }
 }
 
