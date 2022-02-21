@@ -4,6 +4,7 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 // A dynamically sized 2-layer neural network.
 struct network {
@@ -40,6 +41,9 @@ double* create_layer(int n_items) {
 
 struct network create_network(int n_hidden_weights, int n_hidden_neurons, 
         int n_output_weights, int n_output_neurons) {
+    // Seed RNG
+    srand(time(NULL));
+
     struct network n;
     // Amount of inputs is the same as amount of hidden neurons
     n.n_inputs = n_hidden_neurons;
@@ -60,6 +64,11 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
             printf("out of memory");
             exit(1);
         }
+
+        // Randomize weights
+        for (int j = 0; j < n.n_hidden_weights + 1; j++) {
+            n.hidden_weights[i][j] = rand() / RAND_MAX;
+        }
     }
 
     n.n_output_neurons = n_output_neurons;
@@ -76,6 +85,11 @@ struct network create_network(int n_hidden_weights, int n_hidden_neurons,
         if (!n.output_weights[i]) {
             printf("out of memory");
             exit(1);
+        }
+
+        // Randomize weights
+        for (int j = 0; j < n.n_output_weights + 1; j++) {
+            n.output_weights[i][j] = rand() / RAND_MAX;
         }
     }
 
