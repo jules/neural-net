@@ -1,8 +1,54 @@
 #include <stdio.h>
 #include "network.c"
 
+void test_prediction() {
+    double* dataset[10];
+    double data_0[3] = {2.7810836,2.550537003,0.0};
+    dataset[0] = &data_0;
+    double data_1[3] = {1.465489372,2.362125076,0.0};
+    dataset[1] = &data_1;
+    double data_2[3] = {3.396561688,4.400293529,0.0};
+    dataset[2] = &data_2;
+    double data_3[3] = {1.38807019,1.850220317,0.0};
+    dataset[3] = &data_3;
+    double data_4[3] = {3.06407232,3.005305973,0.0};
+    dataset[4] = &data_4;
+    double data_5[3] = {7.627531214,2.759262235,1.0};
+    dataset[5] = &data_5;
+    double data_6[3] = {5.332441248,2.088626775,1.0};
+    dataset[6] = &data_6;
+    double data_7[3] = {6.922596716,1.77106367,1.0};
+    dataset[7] = &data_7;
+    double data_8[3] = {8.675418651,-0.242068655,1.0};
+    dataset[8] = &data_8;
+    double data_9[3] = {7.673756466,3.508563011,1.0};
+    dataset[9] = &data_9;
+
+    struct network n = create_network(2, 2, 2, 2);
+
+    n.hidden_weights[0][0] = -1.482313569067226;
+    n.hidden_weights[0][1] = 1.8308790073202204;
+    n.hidden_weights[0][2] = 1.078381922048799;
+
+    n.hidden_weights[1][0] = 0.23244990332399884;
+    n.hidden_weights[1][1] = 0.3621998343835864;
+    n.hidden_weights[1][2] = 0.40289821191094327;
+
+    n.output_weights[0][0] = 2.5001872433501404;
+    n.output_weights[0][1] = 0.7887233511355132;
+    n.output_weights[0][2] = -1.1026649757805829;
+
+    n.output_weights[1][0] = -2.429350576245497;
+    n.output_weights[1][1] = 0.8357651039198697;
+    n.output_weights[1][2] = 1.0699217181280656;
+
+    for (int i = 0; i < 10; i++) {
+        int prediction = predict(&n, dataset[i]);
+        printf("Expected %f, got %d\n", dataset[i][2], prediction);
+    }
+}
+
 void test_training() {
-    // Contrived dataset to train against
     double* dataset[10];
     double data_0[3] = {2.7810836,2.550537003,0.0};
     dataset[0] = &data_0;
@@ -74,6 +120,6 @@ void test_backprop() {
 }
 
 int main() {
-    test_training();
+    test_prediction();
     return 0;
 }
